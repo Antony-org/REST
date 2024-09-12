@@ -1,3 +1,6 @@
+com/iti/jets/controller/Products.class
+com/iti/jets/exceptions/ErrorMessage.class
 com/iti/jets/MyResource.class
-com/iti/jets/Products.class
+com/iti/jets/exceptions/ResourceNotFoundExceptionMapper.class
+com/iti/jets/exceptions/ResourceNotFoundException.class
 com/iti/jets/model/Product.class

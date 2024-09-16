@@ -41,7 +41,6 @@ public class Products {
         }catch (Exception e) {
             throw new ResourceNotFoundException("Product with ID:" + id + " Not Found");
         }
-
     }
 
     @POST
@@ -60,18 +59,17 @@ public class Products {
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response updateProduct(@PathParam("id") Long id, Product updatedProduct, @Context UriInfo uriInfo) {
-        Product existingProduct = null;
 
         try {
             Product product = productsDB.get(id);
             URI uri = uriInfo.getAbsolutePathBuilder().path(product.getId().toString()).build();
-            existingProduct.setName(updatedProduct.getName());
-            existingProduct.setPrice(updatedProduct.getPrice());
+            product.setName(updatedProduct.getName());
+            product.setPrice(updatedProduct.getPrice());
             System.out.println("reqCounter: " + reqCounter++);
             return Response.created(uri).entity(product).build();
 
         }catch (Exception e) {
-            throw new ResourceNotFoundException("Product with ID:" + id + " Not Found");
+            throw new ResourceNotFoundException("Update req: Product with ID:" + id + " Not Found");
         }
 
     }

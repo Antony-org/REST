@@ -2,6 +2,7 @@ package com.iti.jets.controller;
 
 import com.iti.jets.exceptions.ResourceNotFoundException;
 import com.iti.jets.model.Product;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 
@@ -14,7 +15,8 @@ import java.util.*;
  */
 
 @Path("/products")
-public class Products {
+@Singleton
+public class ProductController {
 
     private static Map<Long, Product> productsDB = new HashMap<>();
     private static Long idCounter = 1L;
@@ -22,8 +24,13 @@ public class Products {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public List<Product> getProducts() {
+    public List<Product> getProducts(@Context UriInfo uriInfo, @Context HttpHeaders headers) {
+        logRequest(uriInfo, headers);
+
         System.out.println("reqCounter: " + reqCounter++);
+        for (Product product : productsDB.values()){
+            addHATEOASLinks(product, uriInfo);
+        }
         return new ArrayList<>(productsDB.values());
     }
 
@@ -36,6 +43,7 @@ public class Products {
             Product product = productsDB.get(id);
             URI uri = uriInfo.getAbsolutePathBuilder().path(product.getId().toString()).build();
             System.out.println("reqCounter: " + reqCounter++);
+            addHATEOASLinks(product, uriInfo);
             return Response.created(uri).entity(product).build();
 
         }catch (Exception e) {
@@ -46,11 +54,16 @@ public class Products {
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response addProduct(Product product, @Context UriInfo uriInfo) {
+    public Response addProduct(Product product, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
+        logRequest(uriInfo, headers);
+
         product.setId(idCounter++);
+        Product createdProduct = product;
         productsDB.put(product.getId(), product);
         URI uri = uriInfo.getAbsolutePathBuilder().path(product.getId().toString()).build();
         System.out.println("reqCounter: " + reqCounter++);
+        //addHATEOASLinks(createdProduct, uriInfo);
+
         return Response.created(uri).entity(product).build();
     }
 
@@ -63,6 +76,7 @@ public class Products {
         try {
             Product product = productsDB.get(id);
             URI uri = uriInfo.getAbsolutePathBuilder().path(product.getId().toString()).build();
+            addHATEOASLinks(updatedProduct, uriInfo);
             product.setName(updatedProduct.getName());
             product.setPrice(updatedProduct.getPrice());
             System.out.println("reqCounter: " + reqCounter++);
@@ -99,5 +113,22 @@ public class Products {
 
         System.out.println("reqCounter: " + reqCounter++);
         return Response.ok().build();
+    }
+
+
+    private void logRequest(UriInfo uriInfo, HttpHeaders headers) {
+        String uri = uriInfo.getRequestUri().toString();
+        headers.getRequestHeaders().forEach((key, value) -> {
+            System.out.println(key + ": " + String.join(", ", value));
+        });
+    }
+
+    private void addHATEOASLinks(Product product, UriInfo uriInfo) {
+        String baseUri = uriInfo.getBaseUriBuilder().toString();
+        String productId = String.valueOf(product.getId());
+
+        product.addLink(new Product.Link("self", baseUri + "products/" + productId));
+        product.addLink(new Product.Link("update", baseUri + "products/" + productId));
+        product.addLink(new Product.Link("delete", baseUri + "products/" + productId));
     }
 }
